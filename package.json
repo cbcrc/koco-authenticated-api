@@ -1,0 +1,11 @@
+{
+  "name": "koco-authenticated-api",
+  "version": "0.1.0",
+  "description": "Basic authenticated api based on koco",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
