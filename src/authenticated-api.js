@@ -5,7 +5,7 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
     function(ko, $, apiUtilities, _, urlUtilities) {
         'use strict';
 
-        function AuthenticatedApi() {
+        function AuthenticatedApi(apiName) {
             var self = this;
 
             self.apiName = '';
@@ -21,7 +21,7 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
             });
         }
 
-        AuthenticatedApi.prototype.init = function(apiName) {
+        AuthenticatedApi.prototype.init = function() {
             var self = this;
 
             self.apiName = apiName;
@@ -142,5 +142,5 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
             }
         }
 
-        return new AuthenticatedApi();
+        return AuthenticatedApi;
     });
