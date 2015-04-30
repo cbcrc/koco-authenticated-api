@@ -8,7 +8,7 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
         function AuthenticatedApi(apiName) {
             var self = this;
 
-            self.apiName = '';
+            self.apiName = apiName;
             self.user = ko.observable({
                 isAuthenticated: false,
                 userName: '',
