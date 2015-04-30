@@ -24,8 +24,6 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
         AuthenticatedApi.prototype.init = function() {
             var self = this;
 
-            self.apiName = apiName;
-
             if (self.isInitialized) {
                 throw new Error('authenticated-api - already initialized');
             }
