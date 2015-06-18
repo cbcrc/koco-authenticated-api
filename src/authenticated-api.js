@@ -105,9 +105,6 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
             return request;
         };
 
-
-
-
         function getAjaxOptions(self, ajaxOptions) {
             var options = $.extend({}, ajaxOptions);
 
@@ -118,6 +115,10 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
             } else {
                 options.error = [handle401, options.error];
             }
+
+            options.xhrFields = {
+                withCredentials: true
+            };
 
             return options;
         }
