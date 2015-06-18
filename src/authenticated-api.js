@@ -116,9 +116,16 @@ define(['knockout', 'jquery', 'api-utilities', 'lodash', 'url-utilities'],
                 options.error = [handle401, options.error];
             }
 
+
+            //TODO: Seulement si CORS configuré
             options.xhrFields = {
                 withCredentials: true
             };
+            options.headers = {'X-Requested-With': 'XMLHttpRequest'};
+
+
+
+
 
             return options;
         }
