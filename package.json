@@ -11,10 +11,16 @@
   },
   "main": "src/authenticated-api.js",
   "dependencies": {
-    "jquery": "^2.1.3",
-    "lodash": "^3.7.0",
-    "knockout": "^3.3.0",
-    "koco-api-utilities": "^0.1.0",
-    "koco-url-utilities": "^0.1.2"
+    "jquery": "^2.2.4",
+    "knockout": "^3.4.0",
+    "koco": "^1.0.0",
+    "koco-api-utilities": "^1.1.0",
+    "koco-url-utilities": "^1.1.0",
+    "lodash": "^4.13.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.9.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-stage-0": "^6.5.0"
   }
 }
