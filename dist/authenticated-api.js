@@ -12,17 +12,17 @@ var _jquery = require('jquery');
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _apiUtilities = require('api-utilities');
+var _kocoApiUtilities = require('koco-api-utilities');
 
-var _apiUtilities2 = _interopRequireDefault(_apiUtilities);
+var _kocoApiUtilities2 = _interopRequireDefault(_kocoApiUtilities);
 
 var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
-var _urlUtilities = require('url-utilities');
+var _kocoUrlUtilities = require('koco-url-utilities');
 
-var _urlUtilities2 = _interopRequireDefault(_urlUtilities);
+var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -47,7 +47,7 @@ AuthenticatedApi.prototype.init = function () {
     var self = this;
 
     if (self.isInitialized) {
-        throw new Error('authenticated-api - already initialized');
+        throw new Error('koco-authenticated-api - already initialized');
     }
 
     self.isInitialized = true;
@@ -63,7 +63,7 @@ AuthenticatedApi.prototype.init = function () {
                 self.user(user);
                 dfd.resolve();
             }).fail(function (jqxhr, textStatus, error) {
-                dfd.reject('authenticated-api - the call to \'user-info\' resource of authenticated api failed.', jqxhr, textStatus, error);
+                dfd.reject('koco-authenticated-api - the call to \'user-info\' resource of authenticated api failed.', jqxhr, textStatus, error);
             });
         } catch (err) {
             dfd.reject(err);
@@ -79,9 +79,9 @@ AuthenticatedApi.prototype.getJson = function (resourceName, ajaxOptionsOrSucces
     ajaxOptionsOrSuccess = ajaxOptionsOrSuccess || {};
 
     if (_lodash2.default.isFunction(ajaxOptionsOrSuccess)) {
-        return _apiUtilities2.default.getJson(self.apiName, resourceName, ajaxOptionsOrSuccess, getAjaxOptions(self, ajaxOptions));
+        return _kocoApiUtilities2.default.getJson(self.apiName, resourceName, ajaxOptionsOrSuccess, getAjaxOptions(self, ajaxOptions));
     } else {
-        return _apiUtilities2.default.getJson(self.apiName, resourceName, getAjaxOptions(self, ajaxOptionsOrSuccess));
+        return _kocoApiUtilities2.default.getJson(self.apiName, resourceName, getAjaxOptions(self, ajaxOptionsOrSuccess));
     }
 };
 
@@ -89,35 +89,35 @@ AuthenticatedApi.prototype.postJson = function (resourceName, data, ajaxOptions)
     var self = this;
 
     validateIsInitialized(self);
-    return _apiUtilities2.default.postJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
+    return _kocoApiUtilities2.default.postJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
 };
 
 AuthenticatedApi.prototype.putJson = function (resourceName, data, ajaxOptions) {
     var self = this;
 
     validateIsInitialized(self);
-    return _apiUtilities2.default.putJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
+    return _kocoApiUtilities2.default.putJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
 };
 
 AuthenticatedApi.prototype.delete = function (resourceName, ajaxOptions) {
     var self = this;
 
     validateIsInitialized(self);
-    return _apiUtilities2.default.delete(self.apiName, resourceName, getAjaxOptions(self, ajaxOptions));
+    return _kocoApiUtilities2.default.delete(self.apiName, resourceName, getAjaxOptions(self, ajaxOptions));
 };
 
 AuthenticatedApi.prototype.url = function (resourceName) {
     var self = this;
 
     validateIsInitialized(self);
-    return _apiUtilities2.default.url(self.apiName, resourceName);
+    return _kocoApiUtilities2.default.url(self.apiName, resourceName);
 };
 
 AuthenticatedApi.prototype.logOff = function () {
     var request = _jquery2.default.ajax('/api/logoff').done(function (data, textStatus, jqXhr) {
         var ajaxRedirect = jqXhr.getResponseHeader('AjaxRedirect');
         if (ajaxRedirect) {
-            var appUrl = window.location.protocol + '//' + window.location.host + _urlUtilities2.default.url('');
+            var appUrl = window.location.protocol + '//' + window.location.host + _kocoUrlUtilities2.default.url('');
             var returnUrl = 'security-authentication-callback?destination=' + encodeURIComponent(appUrl);
             window.location = ajaxRedirect.replace(/&wreply=([^&]*)/, '&wreply=$1' + encodeURIComponent(returnUrl));
         }
@@ -162,7 +162,7 @@ function handle401(jqXhr) {
 
 function validateIsInitialized(self) {
     if (!self.isInitialized) {
-        throw new Error('authenticated-api-utilities - not initialized');
+        throw new Error('koco-authenticated-api - not initialized');
     }
 }
 
