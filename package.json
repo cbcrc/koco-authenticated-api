@@ -11,12 +11,11 @@
   },
   "main": "src/authenticated-api.js",
   "dependencies": {
-    "jquery": "^2.2.4",
-    "knockout": "^3.4.0",
-    "koco": "^1.0.0",
     "koco-api-utilities": "^1.1.0",
     "koco-url-utilities": "^1.1.0",
-    "lodash": "^4.13.1"
+    "lodash": "^4.6.1",
+    "jquery": "^2.1.4",
+    "knockout": "^3.4.0"
   },
   "devDependencies": {
     "babel-cli": "^6.9.0",
