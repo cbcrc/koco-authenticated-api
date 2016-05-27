@@ -3,9 +3,9 @@
 
 import ko from 'knockout';
 import $ from 'jquery';
-import apiUtilities from 'api-utilities';
+import apiUtilities from 'koco-api-utilities';
 import _ from 'lodash';
-import urlUtilities from 'url-utilities';
+import urlUtilities from 'koco-url-utilities';
 
 
 function AuthenticatedApi(apiName) {
@@ -28,7 +28,7 @@ AuthenticatedApi.prototype.init = function() {
     var self = this;
 
     if (self.isInitialized) {
-        throw new Error('authenticated-api - already initialized');
+        throw new Error('koco-authenticated-api - already initialized');
     }
 
     self.isInitialized = true;
@@ -44,7 +44,7 @@ AuthenticatedApi.prototype.init = function() {
                 self.user(user);
                 dfd.resolve();
             }).fail(function(jqxhr, textStatus, error) {
-                dfd.reject('authenticated-api - the call to \'user-info\' resource of authenticated api failed.', jqxhr, textStatus, error);
+                dfd.reject('koco-authenticated-api - the call to \'user-info\' resource of authenticated api failed.', jqxhr, textStatus, error);
             });
         } catch (err) {
             dfd.reject(err);
@@ -149,7 +149,7 @@ function handle401(jqXhr) {
 
 function validateIsInitialized(self) {
     if (!self.isInitialized) {
-        throw new Error('authenticated-api-utilities - not initialized');
+        throw new Error('koco-authenticated-api - not initialized');
     }
 }
 
