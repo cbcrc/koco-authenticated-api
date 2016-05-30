@@ -4,9 +4,12 @@
 import ko from 'knockout';
 import $ from 'jquery';
 import apiUtilities from 'koco-api-utilities';
-import _ from 'lodash';
 import urlUtilities from 'koco-url-utilities';
 
+function isFunction(functionToCheck) {
+ var getType = {};
+ return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
 
 function AuthenticatedApi(apiName) {
     var self = this;
@@ -24,7 +27,7 @@ function AuthenticatedApi(apiName) {
     });
 }
 
-AuthenticatedApi.prototype.init = function() {
+AuthenticatedApi.prototype.initAsync = function() {
     var self = this;
 
     if (self.isInitialized) {
@@ -59,7 +62,7 @@ AuthenticatedApi.prototype.getJson = function(resourceName, ajaxOptionsOrSuccess
     ajaxOptions = ajaxOptions || {};
     ajaxOptionsOrSuccess = ajaxOptionsOrSuccess || {};
 
-    if (_.isFunction(ajaxOptionsOrSuccess)) {
+    if (isFunction(ajaxOptionsOrSuccess)) {
         return apiUtilities.getJson(self.apiName, resourceName, ajaxOptionsOrSuccess, getAjaxOptions(self, ajaxOptions));
     } else {
         return apiUtilities.getJson(self.apiName, resourceName, getAjaxOptions(self, ajaxOptionsOrSuccess));

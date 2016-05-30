@@ -16,15 +16,19 @@ var _kocoApiUtilities = require('koco-api-utilities');
 
 var _kocoApiUtilities2 = _interopRequireDefault(_kocoApiUtilities);
 
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
-
 var _kocoUrlUtilities = require('koco-url-utilities');
 
 var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// Copyright (c) CBC/Radio-Canada. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+function isFunction(functionToCheck) {
+    var getType = {};
+    return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+}
 
 function AuthenticatedApi(apiName) {
     var self = this;
@@ -40,10 +44,9 @@ function AuthenticatedApi(apiName) {
         phoneNumber: '',
         fullName: ''
     });
-} // Copyright (c) CBC/Radio-Canada. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+}
 
-AuthenticatedApi.prototype.init = function () {
+AuthenticatedApi.prototype.initAsync = function () {
     var self = this;
 
     if (self.isInitialized) {
@@ -78,7 +81,7 @@ AuthenticatedApi.prototype.getJson = function (resourceName, ajaxOptionsOrSucces
     ajaxOptions = ajaxOptions || {};
     ajaxOptionsOrSuccess = ajaxOptionsOrSuccess || {};
 
-    if (_lodash2.default.isFunction(ajaxOptionsOrSuccess)) {
+    if (isFunction(ajaxOptionsOrSuccess)) {
         return _kocoApiUtilities2.default.getJson(self.apiName, resourceName, ajaxOptionsOrSuccess, getAjaxOptions(self, ajaxOptions));
     } else {
         return _kocoApiUtilities2.default.getJson(self.apiName, resourceName, getAjaxOptions(self, ajaxOptionsOrSuccess));

@@ -13,7 +13,6 @@
   "dependencies": {
     "koco-api-utilities": "^1.1.0",
     "koco-url-utilities": "^1.1.0",
-    "lodash": "^4.6.1",
     "jquery": "^2.1.4",
     "knockout": "^3.4.0"
   },
