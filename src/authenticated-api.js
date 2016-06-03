@@ -1,159 +1,154 @@
 // Copyright (c) CBC/Radio-Canada. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+
+// https://github.com/github/fetch
+
 import ko from 'knockout';
-import $ from 'jquery';
-import apiUtilities from 'koco-api-utilities';
+import configs from 'koco-configs';
 import urlUtilities from 'koco-url-utilities';
 
-function isFunction(functionToCheck) {
- var getType = {};
- return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+const DEFAULT_FETCH_OPTIONS = {
+  credentials: 'include',
+  mode: 'cors', // TODO:  settings coors oui ou non
+  redirect: 'follow',
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json'
+  }
+};
+
+function getLogOffRedirectLocation(ajaxRedirect) {
+  const appUrl = `${window.location.protocol}//${window.location.host}${urlUtilities.url('')}`;
+  const returnUrl = `security-authentication-callback?destination=${encodeURIComponent(appUrl)}`;
+  return ajaxRedirect.replace(/&wreply=([^&]*)/, `&wreply=$1${encodeURIComponent(returnUrl)}`);
 }
 
-function AuthenticatedApi(apiName) {
-    var self = this;
+function redirectToLogOffPageIfNecessary(response) {
+  const ajaxRedirect = response.headers.get('AjaxRedirect');
 
-    self.apiName = apiName;
-    self.user = ko.observable({
-        isAuthenticated: false,
-        userName: '',
-        groups: [],
-        firstName: '',
-        lastName: '',
-        email: '',
-        phoneNumber: '',
-        fullName: ''
-    });
+  if (ajaxRedirect) {
+    window.location = getLogOffRedirectLocation(ajaxRedirect);
+  }
 }
 
-AuthenticatedApi.prototype.initAsync = function() {
-    var self = this;
+function checkStatus(response) {
+  if (response.status >= 200 && response.status < 300) {
+    return response;
+  }
 
-    if (self.isInitialized) {
-        throw new Error('koco-authenticated-api - already initialized');
-    }
-
-    self.isInitialized = true;
-
-    return new $.Deferred(function(dfd) {
-        try {
-            var ajaxOptions = {
-                dataType: 'json',
-                url: self.url('user-info')
-            };
-
-            $.ajax(getAjaxOptions(self, ajaxOptions)).done(function(user) {
-                self.user(user);
-                dfd.resolve();
-            }).fail(function(jqxhr, textStatus, error) {
-                dfd.reject('koco-authenticated-api - the call to \'user-info\' resource of authenticated api failed.', jqxhr, textStatus, error);
-            });
-        } catch (err) {
-            dfd.reject(err);
-        }
-    }).promise();
-};
-
-AuthenticatedApi.prototype.getJson = function(resourceName, ajaxOptionsOrSuccess, ajaxOptions) {
-    var self = this;
-
-    validateIsInitialized(self);
-    ajaxOptions = ajaxOptions || {};
-    ajaxOptionsOrSuccess = ajaxOptionsOrSuccess || {};
-
-    if (isFunction(ajaxOptionsOrSuccess)) {
-        return apiUtilities.getJson(self.apiName, resourceName, ajaxOptionsOrSuccess, getAjaxOptions(self, ajaxOptions));
-    } else {
-        return apiUtilities.getJson(self.apiName, resourceName, getAjaxOptions(self, ajaxOptionsOrSuccess));
-    }
-};
-
-AuthenticatedApi.prototype.postJson = function(resourceName, data, ajaxOptions) {
-    var self = this;
-
-    validateIsInitialized(self);
-    return apiUtilities.postJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
-};
-
-AuthenticatedApi.prototype.putJson = function(resourceName, data, ajaxOptions) {
-    var self = this;
-
-    validateIsInitialized(self);
-    return apiUtilities.putJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
-};
-
-AuthenticatedApi.prototype.delete = function(resourceName, ajaxOptions) {
-    var self = this;
-
-    validateIsInitialized(self);
-    return apiUtilities.delete(self.apiName, resourceName, getAjaxOptions(self, ajaxOptions));
-};
-
-AuthenticatedApi.prototype.url = function(resourceName) {
-    var self = this;
-
-    validateIsInitialized(self);
-    return apiUtilities.url(self.apiName, resourceName);
-};
-
-AuthenticatedApi.prototype.logOff = function() {
-    var request = $.ajax('/api/logoff')
-        .done(function(data, textStatus, jqXhr) {
-            var ajaxRedirect = jqXhr.getResponseHeader('AjaxRedirect');
-            if (ajaxRedirect) {
-                var appUrl = window.location.protocol + '//' + window.location.host + urlUtilities.url('');
-                var returnUrl = 'security-authentication-callback?destination=' + encodeURIComponent(appUrl);
-                window.location = ajaxRedirect.replace(/&wreply=([^&]*)/, '&wreply=$1' + encodeURIComponent(returnUrl));
-            }
-        });
-
-    return request;
-};
-
-function getAjaxOptions(self, ajaxOptions) {
-    var options = $.extend({}, ajaxOptions);
-
-    if (!options.error) {
-        options.error = handle401;
-    } else if (Array.isArray(options.error)) {
-        options.error.unshift(handle401);
-    } else {
-        options.error = [handle401, options.error];
-    }
-
-
-    //TODO: Seulement si CORS configuré
-    options.xhrFields = {
-        withCredentials: true
-    };
-    options.headers = {
-        'X-Requested-With': 'XMLHttpRequest'
-    };
-
-
-
-
-
-    return options;
+  const error = new Error(response.statusText);
+  error.response = response;
+  throw error;
 }
 
-function handle401(jqXhr) {
-    if (jqXhr.status !== 401) {
-        return;
-    }
+function parseJSON(response) {
+  return response.json();
+}
 
-    var ajaxRedirect = jqXhr.getResponseHeader('AjaxRedirect');
-    if (ajaxRedirect) {
-        var returnUrl = '/api/security-authentication-callback?destination=' + encodeURIComponent(window.location.href);
-        window.location = ajaxRedirect.replace(/%26ru%3d[^&]*/, '%26ru%3d' + encodeURIComponent(returnUrl));
-    }
+function getFetchOptions(fetchOptions) {
+  return Object.assign({}, fetchOptions, DEFAULT_FETCH_OPTIONS);
+}
+
+function getLogInRedirectLocation(ajaxRedirect) {
+  const returnUrl = `/api/security-authentication-callback?destination=${encodeURIComponent(window.location.href)}`;
+  return ajaxRedirect.replace(/%26ru%3d[^&]*/, `%26ru%3d${encodeURIComponent(returnUrl)}`);
+}
+
+function redirectToLogInPageIfNecessary(response) {
+  const ajaxRedirect = response.headers.get('AjaxRedirect');
+
+  if (ajaxRedirect) {
+    window.location = getLogInRedirectLocation(ajaxRedirect);
+  }
+}
+
+function handle401(response) {
+  if (response.status === 401) {
+    redirectToLogInPageIfNecessary(response);
+  }
+
+  return response;
 }
 
 function validateIsInitialized(self) {
-    if (!self.isInitialized) {
-        throw new Error('koco-authenticated-api - not initialized');
+  if (!self.isInitialized) {
+    throw new Error('koco-authenticated-api is not initialized.');
+  }
+}
+
+function tryGetApiBasePathFromConfigs(apiName) {
+  if (!configs || !configs.apis || !configs.apis[apiName]) {
+    throw new Error(`no configs for '${apiName}'.`);
+  }
+
+  if (!configs.apis[apiName].baseUrl) {
+    throw new Error(`no basePath config in configs for '${apiName}'.`);
+  }
+
+  return configs.apis[apiName].baseUrl;
+}
+
+
+class AuthenticatedApi {
+  constructor(apiName) {
+    if (!apiName) {
+      throw new Error('apiName parameter is required.');
     }
+
+    this.apiName = apiName;
+    this.user = ko.observable({
+      isAuthenticated: false,
+      userName: '',
+      groups: [],
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      fullName: ''
+    });
+  }
+
+  initAsync() {
+    if (this.isInitialized) {
+      throw new Error('koco-authenticated-api is already initialized.');
+    }
+
+    this.isInitialized = true;
+
+    return fetch(this.url('user-info'), DEFAULT_FETCH_OPTIONS)
+      .then((response) => {
+        if (response.status >= 200 && response.status < 300) {
+          this.user(response.json());
+          return response;
+        }
+
+        const error = new Error('call to \'user-info\' failed.');
+        error.response = response;
+        throw error;
+      });
+  }
+
+  fetch(resourceName, options) {
+    validateIsInitialized(self);
+
+    return fetch(this.url(resourceName), getFetchOptions(options))
+      .then(handle401)
+      .then(checkStatus)
+      .then(parseJSON);
+  }
+
+  logOff() {
+    return fetch('/api/logoff')
+      .then(checkStatus)
+      .then(redirectToLogOffPageIfNecessary);
+  }
+
+  url(apiName, resourceName) {
+    validateIsInitialized(self);
+
+    return `${tryGetApiBasePathFromConfigs(this.apiName)}/${resourceName}`;
+  }
 }
 
 export default AuthenticatedApi;

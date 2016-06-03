@@ -1,8 +1,8 @@
 {
   "name": "koco-authenticated-api",
-  "version": "1.5.2",
+  "version": "1.0.0",
   "authors": [
-    "fcharest <frederik.charest@radio-canada.ca>"
+    "w3max <maxime.forget-seguin@radio-canada.ca>"
   ],
   "description": "Basic authenticated api for koco",
   "license": "MIT",
@@ -13,7 +13,6 @@
   "dependencies": {
     "koco-api-utilities": "^1.1.0",
     "koco-url-utilities": "^1.1.0",
-    "jquery": "^2.1.4",
     "knockout": "^3.4.0"
   },
   "devDependencies": {

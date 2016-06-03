@@ -1,182 +1,215 @@
 (function (global, factory) {
-    if (typeof define === "function" && define.amd) {
-        define(['exports', 'knockout', 'jquery', 'koco-api-utilities', 'koco-url-utilities'], factory);
-    } else if (typeof exports !== "undefined") {
-        factory(exports, require('knockout'), require('jquery'), require('koco-api-utilities'), require('koco-url-utilities'));
-    } else {
-        var mod = {
-            exports: {}
-        };
-        factory(mod.exports, global.knockout, global.jquery, global.kocoApiUtilities, global.kocoUrlUtilities);
-        global.authenticatedApi = mod.exports;
+  if (typeof define === "function" && define.amd) {
+    define(['exports', 'knockout', 'koco-configs', 'koco-url-utilities'], factory);
+  } else if (typeof exports !== "undefined") {
+    factory(exports, require('knockout'), require('koco-configs'), require('koco-url-utilities'));
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod.exports, global.knockout, global.kocoConfigs, global.kocoUrlUtilities);
+    global.authenticatedApi = mod.exports;
+  }
+})(this, function (exports, _knockout, _kocoConfigs, _kocoUrlUtilities) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _knockout2 = _interopRequireDefault(_knockout);
+
+  var _kocoConfigs2 = _interopRequireDefault(_kocoConfigs);
+
+  var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
+
+  function _interopRequireDefault(obj) {
+    return obj && obj.__esModule ? obj : {
+      default: obj
+    };
+  }
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
     }
-})(this, function (exports, _knockout, _jquery, _kocoApiUtilities, _kocoUrlUtilities) {
-    'use strict';
+  }
 
-    Object.defineProperty(exports, "__esModule", {
-        value: true
-    });
-
-    var _knockout2 = _interopRequireDefault(_knockout);
-
-    var _jquery2 = _interopRequireDefault(_jquery);
-
-    var _kocoApiUtilities2 = _interopRequireDefault(_kocoApiUtilities);
-
-    var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
-
-    function _interopRequireDefault(obj) {
-        return obj && obj.__esModule ? obj : {
-            default: obj
-        };
+  var _createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
     }
 
-    // Copyright (c) CBC/Radio-Canada. All rights reserved.
-    // Licensed under the MIT license. See LICENSE file in the project root for full license information.
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
 
-    function isFunction(functionToCheck) {
-        var getType = {};
-        return functionToCheck && getType.toString.call(functionToCheck) === '[object Function]';
+  var DEFAULT_FETCH_OPTIONS = {
+    credentials: 'include',
+    mode: 'cors', // TODO:  settings coors oui ou non
+    redirect: 'follow',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+
+  function getLogOffRedirectLocation(ajaxRedirect) {
+    var appUrl = window.location.protocol + '//' + window.location.host + _kocoUrlUtilities2.default.url('');
+    var returnUrl = 'security-authentication-callback?destination=' + encodeURIComponent(appUrl);
+    return ajaxRedirect.replace(/&wreply=([^&]*)/, '&wreply=$1' + encodeURIComponent(returnUrl));
+  }
+
+  function redirectToLogOffPageIfNecessary(response) {
+    var ajaxRedirect = response.headers.get('AjaxRedirect');
+
+    if (ajaxRedirect) {
+      window.location = getLogOffRedirectLocation(ajaxRedirect);
+    }
+  }
+
+  function checkStatus(response) {
+    if (response.status >= 200 && response.status < 300) {
+      return response;
     }
 
+    var error = new Error(response.statusText);
+    error.response = response;
+    throw error;
+  }
+
+  function parseJSON(response) {
+    return response.json();
+  }
+
+  function getFetchOptions(fetchOptions) {
+    return Object.assign({}, fetchOptions, DEFAULT_FETCH_OPTIONS);
+  }
+
+  function getLogInRedirectLocation(ajaxRedirect) {
+    var returnUrl = '/api/security-authentication-callback?destination=' + encodeURIComponent(window.location.href);
+    return ajaxRedirect.replace(/%26ru%3d[^&]*/, '%26ru%3d' + encodeURIComponent(returnUrl));
+  }
+
+  function redirectToLogInPageIfNecessary(response) {
+    var ajaxRedirect = response.headers.get('AjaxRedirect');
+
+    if (ajaxRedirect) {
+      window.location = getLogInRedirectLocation(ajaxRedirect);
+    }
+  }
+
+  function handle401(response) {
+    if (response.status === 401) {
+      redirectToLogInPageIfNecessary(response);
+    }
+
+    return response;
+  }
+
+  function validateIsInitialized(self) {
+    if (!self.isInitialized) {
+      throw new Error('koco-authenticated-api is not initialized.');
+    }
+  }
+
+  function tryGetApiBasePathFromConfigs(apiName) {
+    if (!_kocoConfigs2.default || !_kocoConfigs2.default.apis || !_kocoConfigs2.default.apis[apiName]) {
+      throw new Error('no configs for \'' + apiName + '\'.');
+    }
+
+    if (!_kocoConfigs2.default.apis[apiName].baseUrl) {
+      throw new Error('no basePath config in configs for \'' + apiName + '\'.');
+    }
+
+    return _kocoConfigs2.default.apis[apiName].baseUrl;
+  }
+
+  var AuthenticatedApi = function () {
     function AuthenticatedApi(apiName) {
-        var self = this;
+      _classCallCheck(this, AuthenticatedApi);
 
-        self.apiName = apiName;
-        self.user = _knockout2.default.observable({
-            isAuthenticated: false,
-            userName: '',
-            groups: [],
-            firstName: '',
-            lastName: '',
-            email: '',
-            phoneNumber: '',
-            fullName: ''
-        });
+      if (!apiName) {
+        throw new Error('apiName parameter is required.');
+      }
+
+      this.apiName = apiName;
+      this.user = _knockout2.default.observable({
+        isAuthenticated: false,
+        userName: '',
+        groups: [],
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        fullName: ''
+      });
     }
 
-    AuthenticatedApi.prototype.initAsync = function () {
-        var self = this;
+    _createClass(AuthenticatedApi, [{
+      key: 'initAsync',
+      value: function initAsync() {
+        var _this = this;
 
-        if (self.isInitialized) {
-            throw new Error('koco-authenticated-api - already initialized');
+        if (this.isInitialized) {
+          throw new Error('koco-authenticated-api is already initialized.');
         }
 
-        self.isInitialized = true;
+        this.isInitialized = true;
 
-        return new _jquery2.default.Deferred(function (dfd) {
-            try {
-                var ajaxOptions = {
-                    dataType: 'json',
-                    url: self.url('user-info')
-                };
+        return fetch(this.url('user-info'), DEFAULT_FETCH_OPTIONS).then(function (response) {
+          if (response.status >= 200 && response.status < 300) {
+            _this.user(response.json());
+            return response;
+          }
 
-                _jquery2.default.ajax(getAjaxOptions(self, ajaxOptions)).done(function (user) {
-                    self.user(user);
-                    dfd.resolve();
-                }).fail(function (jqxhr, textStatus, error) {
-                    dfd.reject('koco-authenticated-api - the call to \'user-info\' resource of authenticated api failed.', jqxhr, textStatus, error);
-                });
-            } catch (err) {
-                dfd.reject(err);
-            }
-        }).promise();
-    };
-
-    AuthenticatedApi.prototype.getJson = function (resourceName, ajaxOptionsOrSuccess, ajaxOptions) {
-        var self = this;
-
-        validateIsInitialized(self);
-        ajaxOptions = ajaxOptions || {};
-        ajaxOptionsOrSuccess = ajaxOptionsOrSuccess || {};
-
-        if (isFunction(ajaxOptionsOrSuccess)) {
-            return _kocoApiUtilities2.default.getJson(self.apiName, resourceName, ajaxOptionsOrSuccess, getAjaxOptions(self, ajaxOptions));
-        } else {
-            return _kocoApiUtilities2.default.getJson(self.apiName, resourceName, getAjaxOptions(self, ajaxOptionsOrSuccess));
-        }
-    };
-
-    AuthenticatedApi.prototype.postJson = function (resourceName, data, ajaxOptions) {
-        var self = this;
-
-        validateIsInitialized(self);
-        return _kocoApiUtilities2.default.postJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
-    };
-
-    AuthenticatedApi.prototype.putJson = function (resourceName, data, ajaxOptions) {
-        var self = this;
-
-        validateIsInitialized(self);
-        return _kocoApiUtilities2.default.putJson(self.apiName, resourceName, data, getAjaxOptions(self, ajaxOptions));
-    };
-
-    AuthenticatedApi.prototype.delete = function (resourceName, ajaxOptions) {
-        var self = this;
-
-        validateIsInitialized(self);
-        return _kocoApiUtilities2.default.delete(self.apiName, resourceName, getAjaxOptions(self, ajaxOptions));
-    };
-
-    AuthenticatedApi.prototype.url = function (resourceName) {
-        var self = this;
-
-        validateIsInitialized(self);
-        return _kocoApiUtilities2.default.url(self.apiName, resourceName);
-    };
-
-    AuthenticatedApi.prototype.logOff = function () {
-        var request = _jquery2.default.ajax('/api/logoff').done(function (data, textStatus, jqXhr) {
-            var ajaxRedirect = jqXhr.getResponseHeader('AjaxRedirect');
-            if (ajaxRedirect) {
-                var appUrl = window.location.protocol + '//' + window.location.host + _kocoUrlUtilities2.default.url('');
-                var returnUrl = 'security-authentication-callback?destination=' + encodeURIComponent(appUrl);
-                window.location = ajaxRedirect.replace(/&wreply=([^&]*)/, '&wreply=$1' + encodeURIComponent(returnUrl));
-            }
+          var error = new Error('call to \'user-info\' failed.');
+          error.response = response;
+          throw error;
         });
-
-        return request;
-    };
-
-    function getAjaxOptions(self, ajaxOptions) {
-        var options = _jquery2.default.extend({}, ajaxOptions);
-
-        if (!options.error) {
-            options.error = handle401;
-        } else if (Array.isArray(options.error)) {
-            options.error.unshift(handle401);
-        } else {
-            options.error = [handle401, options.error];
+      }
+    }, {
+      key: 'fetch',
+      value: function (_fetch) {
+        function fetch(_x, _x2) {
+          return _fetch.apply(this, arguments);
         }
 
-        //TODO: Seulement si CORS configuré
-        options.xhrFields = {
-            withCredentials: true
-        };
-        options.headers = {
-            'X-Requested-With': 'XMLHttpRequest'
+        fetch.toString = function () {
+          return _fetch.toString();
         };
 
-        return options;
-    }
+        return fetch;
+      }(function (resourceName, options) {
+        validateIsInitialized(self);
 
-    function handle401(jqXhr) {
-        if (jqXhr.status !== 401) {
-            return;
-        }
+        return fetch(this.url(resourceName), getFetchOptions(options)).then(handle401).then(checkStatus).then(parseJSON);
+      })
+    }, {
+      key: 'logOff',
+      value: function logOff() {
+        return fetch('/api/logoff').then(checkStatus).then(redirectToLogOffPageIfNecessary);
+      }
+    }, {
+      key: 'url',
+      value: function url(apiName, resourceName) {
+        validateIsInitialized(self);
 
-        var ajaxRedirect = jqXhr.getResponseHeader('AjaxRedirect');
-        if (ajaxRedirect) {
-            var returnUrl = '/api/security-authentication-callback?destination=' + encodeURIComponent(window.location.href);
-            window.location = ajaxRedirect.replace(/%26ru%3d[^&]*/, '%26ru%3d' + encodeURIComponent(returnUrl));
-        }
-    }
+        return tryGetApiBasePathFromConfigs(this.apiName) + '/' + resourceName;
+      }
+    }]);
 
-    function validateIsInitialized(self) {
-        if (!self.isInitialized) {
-            throw new Error('koco-authenticated-api - not initialized');
-        }
-    }
+    return AuthenticatedApi;
+  }();
 
-    exports.default = AuthenticatedApi;
+  exports.default = AuthenticatedApi;
 });
