@@ -1,16 +1,16 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'knockout', 'koco-configs', 'koco-url-utilities'], factory);
+    define(['exports', 'knockout', 'koco-configs', 'koco-url-utilities', 'koco-http-utilities'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('knockout'), require('koco-configs'), require('koco-url-utilities'));
+    factory(exports, require('knockout'), require('koco-configs'), require('koco-url-utilities'), require('koco-http-utilities'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.knockout, global.kocoConfigs, global.kocoUrlUtilities);
+    factory(mod.exports, global.knockout, global.kocoConfigs, global.kocoUrlUtilities, global.kocoHttpUtilities);
     global.authenticatedApi = mod.exports;
   }
-})(this, function (exports, _knockout, _kocoConfigs, _kocoUrlUtilities) {
+})(this, function (exports, _knockout, _kocoConfigs, _kocoUrlUtilities, _kocoHttpUtilities) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -22,6 +22,8 @@
   var _kocoConfigs2 = _interopRequireDefault(_kocoConfigs);
 
   var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
+
+  var _kocoHttpUtilities2 = _interopRequireDefault(_kocoHttpUtilities);
 
   function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : {
@@ -75,20 +77,6 @@
     if (ajaxRedirect) {
       window.location = getLogOffRedirectLocation(ajaxRedirect);
     }
-  }
-
-  function checkStatus(response) {
-    if (response.status >= 200 && response.status < 300) {
-      return response;
-    }
-
-    var error = new Error(response.statusText);
-    error.response = response;
-    throw error;
-  }
-
-  function parseJSON(response) {
-    return response.json();
   }
 
   function getFetchOptions(fetchOptions) {
@@ -192,12 +180,12 @@
       }(function (resourceName, options) {
         validateIsInitialized(self);
 
-        return fetch(this.url(resourceName), getFetchOptions(options)).then(handle401).then(checkStatus).then(parseJSON);
+        return fetch(this.url(resourceName), getFetchOptions(options)).then(handle401).then(_kocoHttpUtilities2.default.checkStatus).then(_kocoHttpUtilities2.default.parseJSON);
       })
     }, {
       key: 'logOff',
       value: function logOff() {
-        return fetch('/api/logoff').then(checkStatus).then(redirectToLogOffPageIfNecessary);
+        return fetch('/api/logoff').then(_kocoHttpUtilities2.default.checkStatus).then(redirectToLogOffPageIfNecessary);
       }
     }, {
       key: 'url',

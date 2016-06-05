@@ -12,6 +12,7 @@
   "main": "src/authenticated-api.js",
   "dependencies": {
     "koco-api-utilities": "^1.1.0",
+    "koco-http-utilities": "^1.0.0",
     "koco-url-utilities": "^1.1.0",
     "knockout": "^3.4.0"
   },

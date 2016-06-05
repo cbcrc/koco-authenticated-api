@@ -7,6 +7,7 @@
 import ko from 'knockout';
 import configs from 'koco-configs';
 import urlUtilities from 'koco-url-utilities';
+import httpUtilities from 'koco-http-utilities';
 
 const DEFAULT_FETCH_OPTIONS = {
   credentials: 'include',
@@ -30,20 +31,6 @@ function redirectToLogOffPageIfNecessary(response) {
   if (ajaxRedirect) {
     window.location = getLogOffRedirectLocation(ajaxRedirect);
   }
-}
-
-function checkStatus(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return response;
-  }
-
-  const error = new Error(response.statusText);
-  error.response = response;
-  throw error;
-}
-
-function parseJSON(response) {
-  return response.json();
 }
 
 function getFetchOptions(fetchOptions) {
@@ -134,13 +121,13 @@ class AuthenticatedApi {
 
     return fetch(this.url(resourceName), getFetchOptions(options))
       .then(handle401)
-      .then(checkStatus)
-      .then(parseJSON);
+      .then(httpUtilities.checkStatus)
+      .then(httpUtilities.parseJSON);
   }
 
   logOff() {
     return fetch('/api/logoff')
-      .then(checkStatus)
+      .then(httpUtilities.checkStatus)
       .then(redirectToLogOffPageIfNecessary);
   }
 
