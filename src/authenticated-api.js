@@ -11,7 +11,7 @@ import httpUtilities from 'koco-http-utilities';
 
 const DEFAULT_FETCH_OPTIONS = {
   credentials: 'include',
-  mode: 'cors', // TODO:  settings coors oui ou non
+  mode: 'cors', // TODO:  settings cors oui ou non
   redirect: 'follow',
   headers: {
     'Accept': 'application/json',
