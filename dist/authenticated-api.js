@@ -130,6 +130,7 @@
         throw new Error('apiName parameter is required.');
       }
 
+      this.isInitialized = false;
       this.apiName = apiName;
       this.user = _knockout2.default.observable({
         isAuthenticated: false,
@@ -154,15 +155,8 @@
 
         this.isInitialized = true;
 
-        return fetch(this.url('user-info'), DEFAULT_FETCH_OPTIONS).then(function (response) {
-          if (response.status >= 200 && response.status < 300) {
-            _this.user(response.json());
-            return response;
-          }
-
-          var error = new Error('call to \'user-info\' failed.');
-          error.response = response;
-          throw error;
+        return this.fetch('user-info').then(function (data) {
+          _this.user(data);
         });
       }
     }, {
@@ -178,7 +172,7 @@
 
         return fetch;
       }(function (resourceName, options) {
-        validateIsInitialized(self);
+        validateIsInitialized(this);
 
         return fetch(this.url(resourceName), getFetchOptions(options)).then(handle401).then(_kocoHttpUtilities2.default.checkStatus).then(_kocoHttpUtilities2.default.parseJSON);
       })
@@ -189,8 +183,8 @@
       }
     }, {
       key: 'url',
-      value: function url(apiName, resourceName) {
-        validateIsInitialized(self);
+      value: function url(resourceName) {
+        validateIsInitialized(this);
 
         return tryGetApiBasePathFromConfigs(this.apiName) + '/' + resourceName;
       }

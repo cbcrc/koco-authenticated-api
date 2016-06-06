@@ -83,6 +83,7 @@ class AuthenticatedApi {
       throw new Error('apiName parameter is required.');
     }
 
+    this.isInitialized = false;
     this.apiName = apiName;
     this.user = ko.observable({
       isAuthenticated: false,
@@ -103,21 +104,14 @@ class AuthenticatedApi {
 
     this.isInitialized = true;
 
-    return fetch(this.url('user-info'), DEFAULT_FETCH_OPTIONS)
-      .then((response) => {
-        if (response.status >= 200 && response.status < 300) {
-          this.user(response.json());
-          return response;
-        }
-
-        const error = new Error('call to \'user-info\' failed.');
-        error.response = response;
-        throw error;
+    return this.fetch('user-info')
+      .then(data => {
+        this.user(data);
       });
   }
 
   fetch(resourceName, options) {
-    validateIsInitialized(self);
+    validateIsInitialized(this);
 
     return fetch(this.url(resourceName), getFetchOptions(options))
       .then(handle401)
@@ -131,8 +125,8 @@ class AuthenticatedApi {
       .then(redirectToLogOffPageIfNecessary);
   }
 
-  url(apiName, resourceName) {
-    validateIsInitialized(self);
+  url(resourceName) {
+    validateIsInitialized(this);
 
     return `${tryGetApiBasePathFromConfigs(this.apiName)}/${resourceName}`;
   }
