@@ -13,10 +13,11 @@ const DEFAULT_FETCH_OPTIONS = {
   credentials: 'include',
   mode: 'cors', // TODO:  settings cors oui ou non
   redirect: 'follow',
-  headers: {
+  headers: new Headers({
     'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest'
+  })
 };
 
 function getLogOffRedirectLocation(ajaxRedirect) {
