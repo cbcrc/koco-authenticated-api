@@ -180,7 +180,7 @@
     }, {
       key: 'logOff',
       value: function logOff() {
-        return fetch('/api/logoff').then(_kocoHttpUtilities2.default.checkStatus).then(redirectToLogOffPageIfNecessary);
+        return fetch('/api/logoff', getFetchOptions()).then(_kocoHttpUtilities2.default.checkStatus).then(redirectToLogOffPageIfNecessary);
       }
     }, {
       key: 'url',

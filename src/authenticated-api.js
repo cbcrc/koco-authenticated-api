@@ -121,7 +121,7 @@ class AuthenticatedApi {
   }
 
   logOff() {
-    return fetch('/api/logoff')
+    return fetch('/api/logoff', getFetchOptions())
       .then(httpUtilities.checkStatus)
       .then(redirectToLogOffPageIfNecessary);
   }
