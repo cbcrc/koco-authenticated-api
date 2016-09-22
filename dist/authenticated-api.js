@@ -89,20 +89,16 @@
     return ajaxRedirect.replace(/%26ru%3d[^&]*/, '%26ru%3d' + encodeURIComponent(returnUrl));
   }
 
-  function redirectToLogInPageIfNecessary(response) {
-    var ajaxRedirect = response.headers.get('AjaxRedirect');
+  function handle401(err) {
+    if (err && err.response && err.response.status === 401) {
+      var ajaxRedirect = err.response.headers.get('AjaxRedirect');
 
-    if (ajaxRedirect) {
-      window.location = getLogInRedirectLocation(ajaxRedirect);
-    }
-  }
-
-  function handle401(response) {
-    if (response.status === 401) {
-      redirectToLogInPageIfNecessary(response);
+      if (ajaxRedirect) {
+        window.location = getLogInRedirectLocation(ajaxRedirect);
+      }
     }
 
-    return response;
+    throw err;
   }
 
   function validateIsInitialized(self) {
@@ -175,7 +171,7 @@
       }(function (resourceName, options) {
         validateIsInitialized(this);
 
-        return fetch(this.url(resourceName), getFetchOptions(options)).then(handle401).then(_kocoHttpUtilities2.default.checkStatus).then(_kocoHttpUtilities2.default.parseJSON);
+        return fetch(this.url(resourceName), getFetchOptions(options)).then(_kocoHttpUtilities2.default.checkStatus).then(_kocoHttpUtilities2.default.parseJSON).catch(handle401);
       })
     }, {
       key: 'logOff',

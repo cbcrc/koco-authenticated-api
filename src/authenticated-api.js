@@ -43,20 +43,16 @@ function getLogInRedirectLocation(ajaxRedirect) {
   return ajaxRedirect.replace(/%26ru%3d[^&]*/, `%26ru%3d${encodeURIComponent(returnUrl)}`);
 }
 
-function redirectToLogInPageIfNecessary(response) {
-  const ajaxRedirect = response.headers.get('AjaxRedirect');
+function handle401(err) {
+  if (err && err.response && err.response.status === 401) {
+    const ajaxRedirect = err.response.headers.get('AjaxRedirect');
 
-  if (ajaxRedirect) {
-    window.location = getLogInRedirectLocation(ajaxRedirect);
-  }
-}
-
-function handle401(response) {
-  if (response.status === 401) {
-    redirectToLogInPageIfNecessary(response);
+    if (ajaxRedirect) {
+      window.location = getLogInRedirectLocation(ajaxRedirect);
+    }
   }
 
-  return response;
+  throw err;
 }
 
 function validateIsInitialized(self) {
@@ -115,9 +111,9 @@ class AuthenticatedApi {
     validateIsInitialized(this);
 
     return fetch(this.url(resourceName), getFetchOptions(options))
-      .then(handle401)
       .then(httpUtilities.checkStatus)
-      .then(httpUtilities.parseJSON);
+      .then(httpUtilities.parseJSON)
+      .catch(handle401);
   }
 
   logOff() {
