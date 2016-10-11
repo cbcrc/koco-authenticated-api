@@ -1,16 +1,16 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['exports', 'knockout', 'koco-configs', 'koco-url-utilities', 'koco-http-utilities'], factory);
+    define(['exports', 'knockout', 'koco-configs', 'koco-url-utilities', 'koco-http-utilities', './authenticated-api-event'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(exports, require('knockout'), require('koco-configs'), require('koco-url-utilities'), require('koco-http-utilities'));
+    factory(exports, require('knockout'), require('koco-configs'), require('koco-url-utilities'), require('koco-http-utilities'), require('./authenticated-api-event'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, global.knockout, global.kocoConfigs, global.kocoUrlUtilities, global.kocoHttpUtilities);
+    factory(mod.exports, global.knockout, global.kocoConfigs, global.kocoUrlUtilities, global.kocoHttpUtilities, global.authenticatedApiEvent);
     global.authenticatedApi = mod.exports;
   }
-})(this, function (exports, _knockout, _kocoConfigs, _kocoUrlUtilities, _kocoHttpUtilities) {
+})(this, function (exports, _knockout, _kocoConfigs, _kocoUrlUtilities, _kocoHttpUtilities, _authenticatedApiEvent) {
   'use strict';
 
   Object.defineProperty(exports, "__esModule", {
@@ -24,6 +24,8 @@
   var _kocoUrlUtilities2 = _interopRequireDefault(_kocoUrlUtilities);
 
   var _kocoHttpUtilities2 = _interopRequireDefault(_kocoHttpUtilities);
+
+  var _authenticatedApiEvent2 = _interopRequireDefault(_authenticatedApiEvent);
 
   function _interopRequireDefault(obj) {
     return obj && obj.__esModule ? obj : {
@@ -89,18 +91,6 @@
     return ajaxRedirect.replace(/%26ru%3d[^&]*/, '%26ru%3d' + encodeURIComponent(returnUrl));
   }
 
-  function handle401(err) {
-    if (err && err.response && err.response.status === 401) {
-      var ajaxRedirect = err.response.headers.get('AjaxRedirect');
-
-      if (ajaxRedirect) {
-        window.location = getLogInRedirectLocation(ajaxRedirect);
-      }
-    }
-
-    throw err;
-  }
-
   function validateIsInitialized(self) {
     if (!self.isInitialized) {
       throw new Error('koco-authenticated-api is not initialized.');
@@ -128,6 +118,7 @@
       }
 
       this.isInitialized = false;
+      this.onRedirectingToLogin = new _authenticatedApiEvent2.default();
       this.apiName = apiName;
       this.user = _knockout2.default.observable({
         isAuthenticated: false,
@@ -169,9 +160,13 @@
 
         return fetch;
       }(function (resourceName, options) {
+        var _this2 = this;
+
         validateIsInitialized(this);
 
-        return fetch(this.url(resourceName), getFetchOptions(options)).then(_kocoHttpUtilities2.default.checkStatus).then(_kocoHttpUtilities2.default.parseJSON).catch(handle401);
+        return fetch(this.url(resourceName), getFetchOptions(options)).then(_kocoHttpUtilities2.default.checkStatus).then(_kocoHttpUtilities2.default.parseJSON).catch(function (ex) {
+          return _this2.handle401(ex);
+        });
       })
     }, {
       key: 'logOff',
@@ -184,6 +179,31 @@
         validateIsInitialized(this);
 
         return tryGetApiBasePathFromConfigs(this.apiName) + '/' + resourceName;
+      }
+    }, {
+      key: 'handle401',
+      value: function handle401(err) {
+        var _this3 = this;
+
+        return new Promise(function (resolve, reject) {
+          if (err && err.response && err.response.status === 401) {
+            (function () {
+              var ajaxRedirect = err.response.headers.get('AjaxRedirect');
+
+              if (ajaxRedirect) {
+                _this3.onRedirectingToLogin.canRedirectToLoginPage().then( /* canRedirectToLoginPage */function () {
+                  // if (canRedirectToLoginPage) {
+                  window.location = getLogInRedirectLocation(ajaxRedirect);
+                  // }
+
+                  reject(err);
+                });
+              }
+            })();
+          } else {
+            reject(err);
+          }
+        });
       }
     }]);
 

@@ -8,6 +8,7 @@ import ko from 'knockout';
 import configs from 'koco-configs';
 import urlUtilities from 'koco-url-utilities';
 import httpUtilities from 'koco-http-utilities';
+import AuthenticatedApiEvent from './authenticated-api-event';
 
 const DEFAULT_FETCH_OPTIONS = {
   credentials: 'include',
@@ -43,17 +44,7 @@ function getLogInRedirectLocation(ajaxRedirect) {
   return ajaxRedirect.replace(/%26ru%3d[^&]*/, `%26ru%3d${encodeURIComponent(returnUrl)}`);
 }
 
-function handle401(err) {
-  if (err && err.response && err.response.status === 401) {
-    const ajaxRedirect = err.response.headers.get('AjaxRedirect');
 
-    if (ajaxRedirect) {
-      window.location = getLogInRedirectLocation(ajaxRedirect);
-    }
-  }
-
-  throw err;
-}
 
 function validateIsInitialized(self) {
   if (!self.isInitialized) {
@@ -81,6 +72,7 @@ class AuthenticatedApi {
     }
 
     this.isInitialized = false;
+    this.onRedirectingToLogin = new AuthenticatedApiEvent();
     this.apiName = apiName;
     this.user = ko.observable({
       isAuthenticated: false,
@@ -113,7 +105,7 @@ class AuthenticatedApi {
     return fetch(this.url(resourceName), getFetchOptions(options))
       .then(httpUtilities.checkStatus)
       .then(httpUtilities.parseJSON)
-      .catch(handle401);
+      .catch(ex => this.handle401(ex));
   }
 
   logOff() {
@@ -126,6 +118,27 @@ class AuthenticatedApi {
     validateIsInitialized(this);
 
     return `${tryGetApiBasePathFromConfigs(this.apiName)}/${resourceName}`;
+  }
+
+  handle401(err) {
+    return new Promise((resolve, reject) => {
+      if (err && err.response && err.response.status === 401) {
+        const ajaxRedirect = err.response.headers.get('AjaxRedirect');
+
+        if (ajaxRedirect) {
+          this.onRedirectingToLogin.canRedirectToLoginPage()
+            .then( /* canRedirectToLoginPage */ () => {
+              // if (canRedirectToLoginPage) {
+              window.location = getLogInRedirectLocation(ajaxRedirect);
+              // }
+
+              reject(err);
+            });
+        }
+      } else {
+        reject(err);
+      }
+    });
   }
 }
 
