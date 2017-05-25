@@ -36,7 +36,14 @@ function redirectToLogOffPageIfNecessary(response) {
 }
 
 function getFetchOptions(fetchOptions) {
-  return Object.assign({}, fetchOptions, DEFAULT_FETCH_OPTIONS);
+  const combinedOptions = Object.assign({}, fetchOptions, DEFAULT_FETCH_OPTIONS);
+
+  if (fetchOptions && fetchOptions.noCache) {
+      combinedOptions.headers.append('pragma', 'no-cache');
+      combinedOptions.headers.append('cache-control', 'no-cache');
+  }
+
+  return combinedOptions;
 }
 
 function getLogInRedirectLocation(ajaxRedirect) {
